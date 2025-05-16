@@ -1,0 +1,538 @@
+openapi: 3.0.3
+info:
+  title: Sample API
+  description: A sample API with various endpoints, models, and data types
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: 'https://api.example.com/v1'
+    description: Production server
+  - url: 'https://dev-api.example.com/v1'
+    description: Development server
+
+paths:
+  /products:
+    get:
+      summary: List all products
+      operationId: getProducts
+      parameters:
+        - name: category
+          in: query
+          description: Filter by category
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: A list of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Create a new product
+      operationId: createProduct
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /products/{productId}:
+    get:
+      summary: Get product by ID
+      operationId: getProductById
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: Update product
+      operationId: updateProduct
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '200':
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      summary: Delete product
+      operationId: deleteProduct
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Product deleted
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /orders:
+    post:
+      summary: Create a new order
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderInput'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /orders/{orderId}:
+    get:
+      summary: Get order details
+      operationId: getOrderById
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      summary: Update order status
+      operationId: updateOrderStatus
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  $ref: '#/components/schemas/OrderStatus'
+      responses:
+        '200':
+          description: Order status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Product:
+      type: object
+      required:
+        - id
+        - name
+        - price
+        - category
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        name:
+          type: string
+          example: "Smartphone X"
+        description:
+          type: string
+          nullable: true
+          example: "Latest model with advanced features"
+        price:
+          type: number
+          format: double
+          example: 999.99
+        category:
+          $ref: '#/components/schemas/ProductCategory'
+        status:
+          $ref: '#/components/schemas/ProductStatus'
+        tags:
+          type: array
+          items:
+            type: string
+          example: ["electronics", "smartphone", "sale"]
+        imageUrls:
+          type: array
+          items:
+            type: string
+            format: uri
+          example: ["https://example.com/images/product1.jpg"]
+        createdAt:
+          type: string
+          format: date-time
+        lastUpdated:
+          type: string
+          format: date-time
+        metaData:
+          type: object
+          additionalProperties: true
+          example: { "weight": "150g", "dimensions": "15x7x0.8cm" }
+
+    ProductInput:
+      type: object
+      required:
+        - name
+        - price
+        - category
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: double
+          minimum: 0.01
+        category:
+          $ref: '#/components/schemas/ProductCategory'
+        status:
+          $ref: '#/components/schemas/ProductStatus'
+          default: "AVAILABLE"
+        tags:
+          type: array
+          items:
+            type: string
+        imageUrls:
+          type: array
+          items:
+            type: string
+            format: uri
+        metaData:
+          type: object
+          additionalProperties: true
+
+    Order:
+      type: object
+      required:
+        - id
+        - customerId
+        - items
+        - totalAmount
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        totalAmount:
+          type: number
+          format: double
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        paymentInfo:
+          $ref: '#/components/schemas/PaymentInfo'
+        shippingAddress:
+          $ref: '#/components/schemas/Address'
+        createdAt:
+          type: string
+          format: date-time
+        lastUpdated:
+          type: string
+          format: date-time
+          nullable: true
+
+    OrderInput:
+      type: object
+      required:
+        - customerId
+        - items
+        - shippingAddress
+        - paymentInfo
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemInput'
+          minItems: 1
+        shippingAddress:
+          $ref: '#/components/schemas/Address'
+        paymentInfo:
+          $ref: '#/components/schemas/PaymentInfo'
+
+    OrderItem:
+      type: object
+      required:
+        - productId
+        - quantity
+        - unitPrice
+      properties:
+        productId:
+          type: string
+          format: uuid
+        productName:
+          type: string
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+        unitPrice:
+          type: number
+          format: double
+        totalPrice:
+          type: number
+          format: double
+
+    OrderItemInput:
+      type: object
+      required:
+        - productId
+        - quantity
+      properties:
+        productId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+
+    Address:
+      type: object
+      required:
+        - street
+        - city
+        - country
+        - postalCode
+      properties:
+        street:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+          nullable: true
+        country:
+          type: string
+        postalCode:
+          type: string
+        phoneNumber:
+          type: string
+          pattern: '^\+?[0-9]{8,15}$'
+
+    PaymentInfo:
+      type: object
+      required:
+        - method
+      properties:
+        method:
+          $ref: '#/components/schemas/PaymentMethod'
+        cardLastFour:
+          type: string
+          pattern: '^[0-9]{4}$'
+          nullable: true
+        cardExpiryDate:
+          type: string
+          pattern: '^(0[1-9]|1[0-2])\/[0-9]{2}$'
+          nullable: true
+        cardHolderName:
+          type: string
+          nullable: true
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: "INVALID_REQUEST"
+        message:
+          type: string
+          example: "The request contains invalid parameters"
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+          example:
+            - field: "name"
+              message: "Name is required"
+
+    # Enums
+    ProductCategory:
+      type: string
+      enum:
+        - ELECTRONICS
+        - CLOTHING
+        - BOOKS
+        - HOME
+        - SPORTS
+        - TOYS
+        - HEALTH
+        - BEAUTY
+        - FOOD
+        - OTHER
+
+    ProductStatus:
+      type: string
+      enum:
+        - AVAILABLE
+        - OUT_OF_STOCK
+        - DISCONTINUED
+        - PRE_ORDER
+
+    OrderStatus:
+      type: string
+      enum:
+        - PENDING
+        - PROCESSING
+        - SHIPPED
+        - DELIVERED
+        - CANCELLED
+        - REFUNDED
+
+    PaymentMethod:
+      type: string
+      enum:
+        - CREDIT_CARD
+        - DEBIT_CARD
+        - PAYPAL
+        - BANK_TRANSFER
+        - CRYPTO
+        - CASH_ON_DELIVERY
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - bearerAuth: []
+  - apiKeyAuth: []
